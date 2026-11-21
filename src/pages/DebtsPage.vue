@@ -80,9 +80,9 @@ import { ref, computed, onMounted, useTemplateRef } from 'vue';
 import { useDebts } from '../composables/useDebts';
 import DebtFormModal from '../components/DebtFormModal.vue';
 import type { Debt, CreateDebtRequest, UpdateDebtRequest } from '../types';
-import { formatCurrency, formatDate } from '@/utils/helpers.ts';
 import DebtDetailsDrawer from '../components/DebtDetailsDrawer.vue';
 import { EllipsisVertical, Plus } from '@lucide/vue';
+import { formatCurrency, formatDate } from '@/utils/helpers';
 
 const selectedDebtForDrawer = ref<Debt | null>(null);
 

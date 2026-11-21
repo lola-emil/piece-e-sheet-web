@@ -11,7 +11,8 @@ export function useDebts() {
         isLoading.value = true;
         try {
             const { data } = await api.get('/api/debts');
-            debts.value = data.data;
+            console.log("DATA FROM DEBTS COMPOSE", data);
+            debts.value = data;
         } catch (error) {
             console.error('Failed to fetch debts', error);
         } finally {

@@ -52,19 +52,17 @@ const router = createRouter({
   routes,
 });
 
-// Navigation Guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
-  // Ensure auth state is loaded from localStorage
-  if (!authStore.user && authStore.token) {
-    authStore.initAuth();
+  // If we don't have a user in the store yet, try to hydrate from cookie
+  if (!authStore.user) {
+    await authStore.initAuth();
   }
 
+  // Now you can safely protect routes:
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'Login' });
-  } else if (to.name === 'Login' && authStore.isAuthenticated) {
-    next({ name: 'Dashboard' });
   } else {
     next();
   }

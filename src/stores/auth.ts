@@ -1,42 +1,48 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import api from '../services/api';
-import type { User, LoginRequest, AuthResponse } from '../types';
+import type { User, LoginRequest } from '../types';
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref<User | null>(null);
-    const token = ref<string | null>(localStorage.getItem('token'));
+    const hasCheckedAuth = ref(false); // <--- Add this flag
 
-    const isAuthenticated = computed(() => !!token.value);
+    const isAuthenticated = computed(() => !!user.value);
 
-    const initAuth = () => {
-        const storedUser = localStorage.getItem('user');
-        if (token.value && storedUser) {
-            user.value = JSON.parse(storedUser);
+    const initAuth = async () => {
+        // Prevent running this on every route navigation
+        if (hasCheckedAuth.value) return;
+
+        try {
+            await fetchUser();
+        } catch (error) {
+            user.value = null;
+        } finally {
+            hasCheckedAuth.value = true;
         }
+    };
+
+    const fetchUser = async () => {
+        const { data } = await api.get<User>('/auth/me');
+        user.value = data;
     };
 
     const login = async (credentials: LoginRequest) => {
+        const { data } = await api.post<{ user: User; }>('/auth/login', credentials);
+        user.value = data.user;
+    };
+
+    const logout = async () => {
         try {
-            const { data } = await api.post<AuthResponse>('/auth/login', credentials);
-
-            token.value = data.token;
-            user.value = data.user;
-
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            await api.post('/auth/logout');
         } catch (error) {
-            throw error;
+            console.error("Logout request failed", error);
+        } finally {
+            user.value = null;
+            hasCheckedAuth.value = false; // Reset on logout
+            window.location.href = '/login';
         }
     };
 
-    const logout = () => {
-        token.value = null;
-        user.value = null;
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        location.reload();
-    };
-
-    return { user, token, isAuthenticated, initAuth, login, logout };
+    return { user, isAuthenticated, hasCheckedAuth, initAuth, fetchUser, login, logout };
 });
